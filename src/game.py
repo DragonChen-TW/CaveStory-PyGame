@@ -6,8 +6,6 @@ from graphics import Graphics
 from player import Player
 
 class Game:
-    '''Game class'''
-
     tile_size = 32
 
     def __init__(self, width=640, height=480, fps=60):
@@ -42,8 +40,7 @@ class Game:
 
     def update(self, time_ms):
         '''Update object position'''
-        # self.player.update(time_ms)
-        pass
+        self.player.update(time_ms)
 
     def draw(self):
         '''Draw the objects'''

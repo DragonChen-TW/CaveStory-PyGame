@@ -3,7 +3,6 @@
 from game import Game
 
 def main():
-    '''Initialize Game instance'''
     game = Game()
     game.loop()
 
