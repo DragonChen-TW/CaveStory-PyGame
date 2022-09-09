@@ -18,19 +18,31 @@ class Game:
         self.graphics = Graphics(self.size)
         self.clock = pygame.time.Clock()
 
-        self.player = Player(self.graphics, 320, 240)
+        self.player = Player(self.graphics, 320, 240,
+            0, 0
+        )
 
     def loop(self):
         '''Main game loop'''
         running = True
         while running:
             key_in = pygame.key.get_pressed()
+
             for event in pygame.event.get():
-                # print('event', event.type)
-                if event.type == pygame.QUIT:
+                if event.type is pygame.QUIT:
                     running = False
             if key_in[pygame.K_ESCAPE]:
                 running = False
+            
+            # Horizonal movement
+            if key_in[pygame.K_LEFT] and key_in[pygame.K_RIGHT]:
+                self.player.stop_moving()
+            elif key_in[pygame.K_LEFT]:
+                self.player.start_moving_left()
+            elif key_in[pygame.K_RIGHT]:
+                self.player.start_moving_right()
+            else:
+                self.player.stop_moving()
 
             self.clock.tick(self.fps)
 

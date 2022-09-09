@@ -5,11 +5,11 @@ import pygame
 class Graphics:
     def __init__(self, size):
         '''Create a screen of given size'''
-        self._screen = pygame.display.set_mode(size)
+        self._screen = pygame.display.set_mode(size, pygame.RESIZABLE)
         self._img_cache = {}
 
         # self.clear()
-    
+
     def load_image(self, file_path):
         '''Load image from cache or from local'''
         if file_path not in self._img_cache:
