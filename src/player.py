@@ -11,7 +11,10 @@ import game
 
 WALK_ACCELERATION = 0.0012  # pixels / ms / ms
 MAX_MOVE = 0.325            # pixels / ms
-SLOWDOWN_FACTOR = 0.75      # ratio
+SLOWDOWN_FACTOR = 0.85      # ratio
+
+JUMP_TIME = 275
+GRAVITY = 0.0012
 # End of Movement Constants
 
 class SpriteState:
@@ -33,12 +36,34 @@ class SpriteState:
     def __hash__(self):
         return self.motion_type * 10 + self.horizontal_facing
 
+class Jump:
+    def __init__(self):
+        self.time_remaining = 0
+        self.active = False
+    
+    def update(self, elapsed_time):
+        if self.active:
+            self.time_remaining -= elapsed_time
+            if self.time_remaining <= 0:
+                self.active = False
+
+    def reset(self):
+        self.time_remaining = JUMP_TIME
+        self.reactivate()
+    
+    def reactivate(self):
+        self.active = self.time_remaining > 0
+    
+    def deactivate(self):
+        self.active = False
+
 class Player:
     def __init__(self, graphics, x, y, vel_x, vel_y):
         self.graphics = graphics
         self.x = x
         self.y = y
         self.acc_x = 0.0
+        self.acc_y = 0.0
         self.vel_x = vel_x
         self.vel_y = vel_y
         
@@ -53,6 +78,9 @@ class Player:
             SpriteState.HorizontalFacing.LEFT,
         )
         self.init_sprites()
+
+        # Jump
+        self.jump = Jump()
 
     def get_sprite_state(self):
         '''Get the current sprite state'''
@@ -110,6 +138,7 @@ class Player:
 
     def update(self, time_ms):
         '''update the player position and animation frame'''
+        self.jump.update(time_ms)
         self.sprites[self.get_sprite_state()].update(time_ms)
 
         self.x += round(self.vel_x * time_ms)
@@ -120,17 +149,27 @@ class Player:
             self.vel_x = max(self.vel_x, -MAX_MOVE)
         elif self.acc_x > 0:    # to right
             self.vel_x = min(self.vel_x, MAX_MOVE)
-        else:
+        elif self.on_ground():
             self.vel_x *= SLOWDOWN_FACTOR
-    
-        # Boundary
-        if self.x < 0:
-            self.x = 0
-        if self.x > 640 - 32:
-            self.x = 640 - 32
+        
+        # Jump
+        self.y += round(self.vel_y * time_ms)
+        if not self.jump.active:
+            self.vel_y = min(
+                self.vel_y + GRAVITY * time_ms,
+                MAX_MOVE
+            )
+
+        # TODO: remove this hack
+        if self.y >= 240:
+            self.y = 240
+            self.vel_y = 0
+        if self.y <= 0:
+            self.y = 0
 
     def draw(self):
         '''Draw the player on the screen'''
+        print('jump', self.jump.active)
         self.sprites[self.get_sprite_state()].draw(self.graphics, self.x, self.y)
 
     # Moving Functions
@@ -144,3 +183,19 @@ class Player:
 
     def stop_moving(self):
         self.acc_x = 0.0
+    
+    def on_ground(self):
+        return self.y >= 240
+    
+    def start_jump(self):
+        if self.on_ground():
+            # If we are on the ground, reset the jump
+            # Give initial jump velocity
+            self.jump.reset()
+            self.vel_y = -MAX_MOVE
+        elif self.vel_y < 0:
+            self.jump.reactivate()
+    
+    def stop_jump(self):
+        # deactivate the jump
+        self.jump.deactivate()

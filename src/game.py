@@ -15,6 +15,10 @@ class Game:
         self.fps = fps
         self.size = (width, height)
 
+        pygame.init()
+        pygame.display.set_mode(self.size)
+        print('init')
+
         self.graphics = Graphics(self.size)
         self.clock = pygame.time.Clock()
 
@@ -31,6 +35,14 @@ class Game:
             for event in pygame.event.get():
                 if event.type is pygame.QUIT:
                     running = False
+                
+                # Player Jump
+                if event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
+                    if event.type == pygame.KEYDOWN and event.key == pygame.K_x:
+                        self.player.start_jump()
+                    elif event.type == pygame.KEYUP and event.key == pygame.K_x:
+                        self.player.stop_jump()
+
             if key_in[pygame.K_ESCAPE]:
                 running = False
             
