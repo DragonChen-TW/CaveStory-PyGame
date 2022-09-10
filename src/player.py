@@ -14,6 +14,25 @@ MAX_MOVE = 0.325            # pixels / ms
 SLOWDOWN_FACTOR = 0.75      # ratio
 # End of Movement Constants
 
+class SpriteState:
+    class MotionType:
+        STANDING = 0
+        WALKING = 1
+    
+    class HorizontalFacing:
+        LEFT = 0
+        RIGHT = 1
+    
+    def __init__(self, motion_type=MotionType.STANDING, horizontal_facing=HorizontalFacing.LEFT):
+        self.motion_type = motion_type
+        self.horizontal_facing = horizontal_facing
+
+    def __eq__(self, other):
+        return (self.motion_type, self.horizontal_facing) == (other.motion_type, other.horizontal_facing)
+    
+    def __hash__(self):
+        return self.motion_type * 10 + self.horizontal_facing
+
 class Player:
     def __init__(self, graphics, x, y, vel_x, vel_y):
         self.graphics = graphics
@@ -27,34 +46,67 @@ class Player:
         self.moving_left = False
         self.moving_right = False
 
+        # Sprites
         self.sprites = {}
+        self.sprite_state = SpriteState(
+            SpriteState.MotionType.STANDING,
+            SpriteState.HorizontalFacing.LEFT,
+        )
         self.init_sprites()
-        self.horizontal_facing = 0 # LEFT
 
     def get_sprite_state(self):
         '''Get the current sprite state'''
-        return '10' # STAND, FACING_LEFT
+        if self.acc_x == 0:
+            self.sprite_state.motion_type = SpriteState.MotionType.STANDING
+        else:
+            self.sprite_state.motion_type = SpriteState.MotionType.WALKING
+        return self.sprite_state
 
     def init_sprites(self):
         '''Create sprites for each state'''
         tile_size = game.Game.tile_size
 
-        # Standing, Facing LEFT
-        self.sprites['00'] = \
-            sprite.Sprite(
-                self.graphics,
-                'content/MyChar.bmp', 0, 0,
-                tile_size, tile_size
-            )
+        # STANDING, Facing LEFT
+        self.sprites[SpriteState(
+            SpriteState.MotionType.STANDING,
+            SpriteState.HorizontalFacing.LEFT,
+        )] = sprite.Sprite(
+            self.graphics,
+            'content/MyChar.bmp', 0, 0,
+            tile_size, tile_size,
+        )
         
-        # Moving, Facing LEFT
-        self.sprites['10'] = \
-            sprite.AnimatedSprite(
-                self.graphics,
-                'content/MyChar.bmp', 0, 0,
-                tile_size, tile_size,
-                15, 3
-            )
+        # WALKING, Facing LEFT
+        self.sprites[SpriteState(
+            SpriteState.MotionType.WALKING,
+            SpriteState.HorizontalFacing.LEFT,
+        )] = sprite.AnimatedSprite(
+            self.graphics,
+            'content/MyChar.bmp', 0, 0,
+            tile_size, tile_size,
+            15, 3
+        )
+
+        # STANDING, Facing RIGHT
+        self.sprites[SpriteState(
+            SpriteState.MotionType.STANDING,
+            SpriteState.HorizontalFacing.RIGHT,
+        )] = sprite.Sprite(
+            self.graphics,
+            'content/MyChar.bmp', 0, tile_size,
+            tile_size, tile_size,
+        )
+        
+        # WALKING, Facing RIGHT
+        self.sprites[SpriteState(
+            SpriteState.MotionType.WALKING,
+            SpriteState.HorizontalFacing.RIGHT,
+        )] = sprite.AnimatedSprite(
+            self.graphics,
+            'content/MyChar.bmp', 0, tile_size,
+            tile_size, tile_size,
+            15, 3
+        )
 
     def update(self, time_ms):
         '''update the player position and animation frame'''
@@ -83,9 +135,11 @@ class Player:
 
     # Moving Functions
     def start_moving_left(self):
+        self.sprite_state.horizontal_facing = SpriteState.HorizontalFacing.LEFT
         self.acc_x = -WALK_ACCELERATION
 
     def start_moving_right(self):
+        self.sprite_state.horizontal_facing = SpriteState.HorizontalFacing.RIGHT
         self.acc_x = WALK_ACCELERATION
 
     def stop_moving(self):
